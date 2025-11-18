@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Ticket - Deployment Guide</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        pre code {
+            background: transparent;
+            padding: 0;
+        }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        .config-table td:first-child {
+            font-family: monospace;
+            white-space: nowrap;
+        }
+        .endpoint-method {
+            font-weight: bold;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+        .method-get { background: #61affe; color: white; }
+        .method-post { background: #49cc90; color: white; }
+    </style>
+</head>
+<body>
+    <section class="hero is-medium">
+        <div class="hero-body">
+            <div class="container has-text-centered">
+                <h1 class="title is-1 has-text-white">
+                    <i class="fas fa-ticket-alt"></i> Event Ticket
+                </h1>
+                <h2 class="subtitle has-text-white-ter">
+                    Multi-Organization Ticket Sales for BMF 2026
+                </h2>
+                <p class="has-text-white-ter">
+                    Deployment & Configuration Guide
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="content">
+
+                <!-- Quick Start -->
+                <h2 class="title is-3">
+                    <i class="fas fa-rocket"></i> Quick Start
+                </h2>
+
+                <div class="box">
+                    <h3 class="title is-5"><span class="step-number">1</span> Database Setup</h3>
+                    <pre><code># Run the schema migration
+psql -h DB_HOST -p DB_PORT -d DB_NAME -f app/schema.sql
+
+# Import sample BMF organizations
+python cli/import-bmf-orgs.py</code></pre>
+                </div>
+
+                <div class="box">
+                    <h3 class="title is-5"><span class="step-number">2</span> Configure Environment</h3>
+                    <pre><code># Copy environment template
+cp app/.env.example app/.env
+
+# Edit with your settings
+nano app/.env</code></pre>
+                </div>
+
+                <div class="box">
+                    <h3 class="title is-5"><span class="step-number">3</span> Start API Server</h3>
+                    <pre><code># Install dependencies
+pip install -r requirements.txt
+
+# Start the server
+python app/server.py</code></pre>
+                </div>
+
+                <div class="box">
+                    <h3 class="title is-5"><span class="step-number">4</span> Access Ticket Shop</h3>
+                    <pre><code># Open in browser
+http://localhost/ticket-shop.html?org=mv-st-poelten&event=bmf-2026-stpoelten</code></pre>
+                </div>
+
+                <hr>
+
+                <!-- Environment Configuration -->
+                <h2 class="title is-3">
+                    <i class="fas fa-cog"></i> Environment Configuration
+                </h2>
+
+                <table class="table is-fullwidth config-table">
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Description</th>
+                            <th>Default</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>DB_HOST</td>
+                            <td>PostgreSQL host</td>
+                            <td>51.158.130.90</td>
+                        </tr>
+                        <tr>
+                            <td>DB_PORT</td>
+                            <td>PostgreSQL port</td>
+                            <td>25120</td>
+                        </tr>
+                        <tr>
+                            <td>DB_NAME</td>
+                            <td>Database name</td>
+                            <td>abuch</td>
+                        </tr>
+                        <tr>
+                            <td>DB_USER</td>
+                            <td>Database username</td>
+                            <td>(empty)</td>
+                        </tr>
+                        <tr>
+                            <td>DB_PASSWORD</td>
+                            <td>Database password</td>
+                            <td>(empty)</td>
+                        </tr>
+                        <tr>
+                            <td>PORT</td>
+                            <td>API server port</td>
+                            <td>8010</td>
+                        </tr>
+                        <tr>
+                            <td>DEBUG</td>
+                            <td>Enable debug mode</td>
+                            <td>true</td>
+                        </tr>
+                        <tr>
+                            <td>SEPA_API_URL</td>
+                            <td>SEPA.digital API endpoint</td>
+                            <td>https://api.sepa.digital</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <hr>
+
+                <!-- Docker Deployment -->
+                <h2 class="title is-3">
+                    <i class="fab fa-docker"></i> Docker Deployment
+                </h2>
+
+                <h4 class="title is-5">Build Docker Image</h4>
+                <pre><code># Build the image
+docker build -t event-ticket:latest .
+
+# Or use the registry
+docker pull rg.fr-par.scw.cloud/sofort/event-ticket:latest</code></pre>
+
+                <h4 class="title is-5">Docker Compose</h4>
+                <pre><code>version: '3.8'
+
+services:
+  # API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=event_ticket
+      - DB_USER=postgres
+      - DB_PASSWORD=secret
+      - SEPA_API_URL=https://api.sepa.digital
+    ports:
+      - "8010:8010"
+    depends_on:
+      - postgres
+
+  # Web Frontend
+  web:
+    image: nginx:alpine
+    volumes:
+      - ./public:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+      - "443:443"
+
+  # Database
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=event_ticket
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./app/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:</code></pre>
+
+                <h4 class="title is-5">Run with Docker Compose</h4>
+                <pre><code># Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down</code></pre>
+
+                <hr>
+
+                <!-- API Endpoints -->
+                <h2 class="title is-3">
+                    <i class="fas fa-plug"></i> API Endpoints
+                </h2>
+
+                <table class="table is-fullwidth">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="endpoint-method method-get">GET</span></td>
+                            <td><code>/v1/organizations</code></td>
+                            <td>List all organizations</td>
+                        </tr>
+                        <tr>
+                            <td><span class="endpoint-method method-get">GET</span></td>
+                            <td><code>/v1/organizations/:slug</code></td>
+                            <td>Get organization details</td>
+                        </tr>
+                        <tr>
+                            <td><span class="endpoint-method method-get">GET</span></td>
+                            <td><code>/v1/organizations/:slug/payment-config</code></td>
+                            <td>Get payment configuration</td>
+                        </tr>
+                        <tr>
+                            <td><span class="endpoint-method method-get">GET</span></td>
+                            <td><code>/v1/organizations/:slug/events</code></td>
+                            <td>List organization events</td>
+                        </tr>
+                        <tr>
+                            <td><span class="endpoint-method method-get">GET</span></td>
+                            <td><code>/v1/organizations/:slug/events/:event</code></td>
+                            <td>Get event with tickets</td>
+                        </tr>
+                        <tr>
+                            <td><span class="endpoint-method method-post">POST</span></td>
+                            <td><code>/v1/organizations/:slug/orders</code></td>
+                            <td>Create ticket order</td>
+                        </tr>
+                        <tr>
+                            <td><span class="endpoint-method method-get">GET</span></td>
+                            <td><code>/v1/orders/:order_number</code></td>
+                            <td>Get order details</td>
+                        </tr>
+                        <tr>
+                            <td><span class="endpoint-method method-get">GET</span></td>
+                            <td><code>/v1/orders/:order_number/status</code></td>
+                            <td>Check payment status</td>
+                        </tr>
+                        <tr>
+                            <td><span class="endpoint-method method-get">GET</span></td>
+                            <td><code>/v1/events/upcoming</code></td>
+                            <td>List upcoming events</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <hr>
+
+                <!-- Sample Organizations -->
+                <h2 class="title is-3">
+                    <i class="fas fa-music"></i> Sample BMF Organizations
+                </h2>
+
+                <div class="columns is-multiline">
+                    <div class="column is-6">
+                        <div class="box">
+                            <h4 class="title is-5">Musikverein St. Poelten</h4>
+                            <p><strong>Slug:</strong> <code>mv-st-poelten</code></p>
+                            <p><strong>Event:</strong> <code>bmf-2026-stpoelten</code></p>
+                            <a href="ticket-shop.html?org=mv-st-poelten&event=bmf-2026-stpoelten" class="button is-primary is-small mt-2">
+                                Open Ticket Shop
+                            </a>
+                        </div>
+                    </div>
+                    <div class="column is-6">
+                        <div class="box">
+                            <h4 class="title is-5">Trachtenkapelle Krems</h4>
+                            <p><strong>Slug:</strong> <code>tk-krems</code></p>
+                            <p><strong>Event:</strong> <code>bmf-2026-krems</code></p>
+                            <a href="ticket-shop.html?org=tk-krems&event=bmf-2026-krems" class="button is-primary is-small mt-2">
+                                Open Ticket Shop
+                            </a>
+                        </div>
+                    </div>
+                    <div class="column is-6">
+                        <div class="box">
+                            <h4 class="title is-5">Blasmusikkapelle Tulln</h4>
+                            <p><strong>Slug:</strong> <code>bmk-tulln</code></p>
+                            <p><strong>Event:</strong> <code>bmf-2026-tulln</code></p>
+                            <a href="ticket-shop.html?org=bmk-tulln&event=bmf-2026-tulln" class="button is-primary is-small mt-2">
+                                Open Ticket Shop
+                            </a>
+                        </div>
+                    </div>
+                    <div class="column is-6">
+                        <div class="box">
+                            <h4 class="title is-5">Demo Organization</h4>
+                            <p><strong>Slug:</strong> <code>bmf-demo</code></p>
+                            <p><strong>Event:</strong> <code>bmf-2026-hauptfest</code></p>
+                            <a href="ticket-shop.html?org=bmf-demo&event=bmf-2026-hauptfest" class="button is-primary is-small mt-2">
+                                Open Ticket Shop
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Adding New Organization -->
+                <h2 class="title is-3">
+                    <i class="fas fa-plus-circle"></i> Adding a New Organization
+                </h2>
+
+                <div class="box">
+                    <h4 class="title is-5">1. Insert Organization</h4>
+                    <pre><code>INSERT INTO organizations (
+    slug, name, description, email, phone,
+    street_address, postal_code, city,
+    iban, bic, recipient_name, payment_reference_prefix
+) VALUES (
+    'mk-example',
+    'Musikkapelle Example',
+    'Musikkapelle Example - BMF 2026',
+    'info@mk-example.at',
+    '+43 1234 56789',
+    'Hauptstrasse 1',
+    '1010',
+    'Wien',
+    'AT123456789012345678',
+    'BKAUATWW',
+    'Musikkapelle Example',
+    'BMF2026-EX'
+);</code></pre>
+                </div>
+
+                <div class="box">
+                    <h4 class="title is-5">2. Create Event</h4>
+                    <pre><code>INSERT INTO events (
+    organization_id, slug, name, description,
+    event_type, venue_name, venue_address,
+    start_date, end_date, max_capacity,
+    sales_start, sales_end
+) VALUES (
+    (SELECT id FROM organizations WHERE slug = 'mk-example'),
+    'bmf-2026-example',
+    'BMF 2026 Example',
+    'Bezirksmusikfest 2026 in Example',
+    'festival',
+    'Festplatz Example',
+    'Festplatz 1, 1010 Wien',
+    '2026-07-01 14:00:00',
+    '2026-07-02 02:00:00',
+    5000,
+    '2025-12-01 00:00:00',
+    '2026-06-30 23:59:59'
+);</code></pre>
+                </div>
+
+                <div class="box">
+                    <h4 class="title is-5">3. Add Tickets</h4>
+                    <pre><code>INSERT INTO tickets (event_id, name, description, price, quantity_total, max_per_order, sort_order)
+VALUES
+    ((SELECT id FROM events WHERE slug = 'bmf-2026-example'), 'Tageskarte', 'Tageseintritt', 15.00, 3000, 10, 1),
+    ((SELECT id FROM events WHERE slug = 'bmf-2026-example'), 'VIP Ticket', 'VIP Bereich', 50.00, 200, 4, 2);</code></pre>
+                </div>
+
+                <div class="box">
+                    <h4 class="title is-5">4. Access Ticket Shop</h4>
+                    <pre><code>https://your-domain.at/ticket-shop.html?org=mk-example&event=bmf-2026-example</code></pre>
+                </div>
+
+                <hr>
+
+                <!-- Support -->
+                <h2 class="title is-3">
+                    <i class="fas fa-life-ring"></i> Support
+                </h2>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="box has-text-centered">
+                            <span class="icon is-large has-text-info">
+                                <i class="fas fa-book fa-2x"></i>
+                            </span>
+                            <h4 class="title is-5 mt-3">Documentation</h4>
+                            <p>See <code>app/api.md</code> for full API documentation</p>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="box has-text-centered">
+                            <span class="icon is-large has-text-success">
+                                <i class="fas fa-database fa-2x"></i>
+                            </span>
+                            <h4 class="title is-5 mt-3">Database</h4>
+                            <p>Schema in <code>app/schema.sql</code></p>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="box has-text-centered">
+                            <span class="icon is-large has-text-warning">
+                                <i class="fas fa-credit-card fa-2x"></i>
+                            </span>
+                            <h4 class="title is-5 mt-3">Payments</h4>
+                            <p>BANKpay+ / SEPA.digital integration</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="content has-text-centered">
+            <p>
+                <strong>Event Ticket</strong> - Multi-Organization Ticket Sales for BMF 2026<br>
+                Powered by <strong>BANKpay+</strong> | SEPA Instant Credit Transfers
+            </p>
+            <p class="is-size-7 has-text-grey">
+                Version 2.0.0 | <a href="app/api.md">API Documentation</a>
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

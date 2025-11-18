@@ -1,14 +1,13 @@
-sanic == 19.9 # 19.6.3 # 19.12
-# sanic-cors
+sanic>=23.6.0
 sqlalchemy
 python-stdnum
 MechanicalSoup
 PyYAML
 lxml
-psycopg2
+psycopg2-binary
 environs
 requests
-slugify
+python-slugify
 
 # websockets == 7.*
 # sanic-envconfig

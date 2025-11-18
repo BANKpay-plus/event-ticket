@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Tickets - BMF 2026</title>
+
+    <!-- Bulma CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #1976D2;
+            --secondary-color: #424242;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .hero-body {
+            padding: 1rem;
+        }
+
+        .ticket-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .ticket-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .ticket-card.selected {
+            border: 2px solid var(--primary-color);
+            background: #e3f2fd;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quantity-control button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+        }
+
+        .quantity-control input {
+            width: 60px;
+            text-align: center;
+        }
+
+        .cart-summary {
+            position: sticky;
+            top: 1rem;
+        }
+
+        .payment-qr {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .payment-qr img {
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        .step.active {
+            background: white;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .step.completed {
+            background: #4caf50;
+            color: white;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: currentColor;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .step.active .step-number {
+            background: var(--primary-color);
+        }
+
+        .event-header {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .event-date {
+            font-size: 1.25rem;
+            color: #666;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="hero is-fullheight">
+        <div class="hero-body">
+            <div class="container">
+                <!-- Step Indicator -->
+                <div class="step-indicator no-print">
+                    <div class="step" id="step1" data-step="1">
+                        <span class="step-number">1</span>
+                        <span>Tickets</span>
+                    </div>
+                    <div class="step" id="step2" data-step="2">
+                        <span class="step-number">2</span>
+                        <span>Daten</span>
+                    </div>
+                    <div class="step" id="step3" data-step="3">
+                        <span class="step-number">3</span>
+                        <span>Bezahlung</span>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div id="app">
+                    <!-- Loading State -->
+                    <div id="loading" class="loading-spinner">
+                        <span class="icon is-large">
+                            <i class="fas fa-circle-notch fa-spin fa-3x"></i>
+                        </span>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="error" class="notification is-danger" style="display: none;">
+                        <button class="delete" onclick="this.parentElement.style.display='none'"></button>
+                        <span id="error-message"></span>
+                    </div>
+
+                    <!-- Step 1: Select Tickets -->
+                    <div id="step-tickets" style="display: none;">
+                        <div class="event-header">
+                            <h1 class="title is-2" id="event-name"></h1>
+                            <p class="event-date" id="event-date"></p>
+                            <p id="event-venue" class="has-text-grey"></p>
+                        </div>
+
+                        <div class="columns">
+                            <div class="column is-8">
+                                <h2 class="title is-4">Verfuegbare Tickets</h2>
+                                <div id="ticket-list">
+                                    <!-- Tickets will be loaded here -->
+                                </div>
+                            </div>
+
+                            <div class="column is-4">
+                                <div class="cart-summary box">
+                                    <h3 class="title is-5">Warenkorb</h3>
+                                    <div id="cart-items">
+                                        <p class="has-text-grey">Keine Tickets ausgewaehlt</p>
+                                    </div>
+                                    <hr>
+                                    <div class="level">
+                                        <div class="level-left">
+                                            <strong>Gesamt:</strong>
+                                        </div>
+                                        <div class="level-right">
+                                            <strong id="cart-total">EUR 0,00</strong>
+                                        </div>
+                                    </div>
+                                    <button class="button is-primary is-fullwidth" id="btn-to-details" disabled>
+                                        <span class="icon">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </span>
+                                        <span>Weiter zu Ihren Daten</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Customer Details -->
+                    <div id="step-details" style="display: none;">
+                        <div class="box">
+                            <h2 class="title is-4">Ihre Kontaktdaten</h2>
+                            <form id="customer-form">
+                                <div class="field">
+                                    <label class="label">Name *</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="text" id="customer-name" required placeholder="Max Mustermann">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <label class="label">E-Mail *</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="email" id="customer-email" required placeholder="max@beispiel.at">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                    </div>
+                                    <p class="help">Ihre Tickets werden an diese Adresse gesendet</p>
+                                </div>
+
+                                <div class="field">
+                                    <label class="label">Telefon</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="tel" id="customer-phone" placeholder="+43 664 1234567">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-phone"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                <h3 class="title is-5">Bestelluebersicht</h3>
+                                <div id="order-summary">
+                                    <!-- Order summary will be shown here -->
+                                </div>
+
+                                <hr>
+
+                                <div class="buttons is-right">
+                                    <button type="button" class="button" id="btn-back-tickets">
+                                        <span class="icon">
+                                            <i class="fas fa-arrow-left"></i>
+                                        </span>
+                                        <span>Zurueck</span>
+                                    </button>
+                                    <button type="submit" class="button is-primary" id="btn-to-payment">
+                                        <span class="icon">
+                                            <i class="fas fa-credit-card"></i>
+                                        </span>
+                                        <span>Zur Bezahlung</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Payment -->
+                    <div id="step-payment" style="display: none;">
+                        <div class="box has-text-centered">
+                            <h2 class="title is-4">Bezahlung mit BANKpay+</h2>
+
+                            <div id="payment-pending">
+                                <div class="payment-qr">
+                                    <img id="payment-qr-code" src="" alt="QR Code">
+                                </div>
+
+                                <p class="mt-4">
+                                    Scannen Sie den QR-Code mit Ihrer Banking-App<br>
+                                    oder ueberweisen Sie manuell:
+                                </p>
+
+                                <div class="box mt-4" style="text-align: left;">
+                                    <p><strong>Empfaenger:</strong> <span id="payment-recipient"></span></p>
+                                    <p><strong>IBAN:</strong> <span id="payment-iban"></span></p>
+                                    <p><strong>BIC:</strong> <span id="payment-bic"></span></p>
+                                    <p><strong>Betrag:</strong> <span id="payment-amount"></span></p>
+                                    <p><strong>Verwendungszweck:</strong> <span id="payment-reference"></span></p>
+                                </div>
+
+                                <div class="mt-4">
+                                    <span class="icon">
+                                        <i class="fas fa-circle-notch fa-spin"></i>
+                                    </span>
+                                    <span>Warte auf Zahlungseingang...</span>
+                                </div>
+                            </div>
+
+                            <div id="payment-success" style="display: none;">
+                                <span class="icon is-large has-text-success">
+                                    <i class="fas fa-check-circle fa-3x"></i>
+                                </span>
+                                <h3 class="title is-4 mt-4">Zahlung erfolgreich!</h3>
+                                <p>Ihre Tickets wurden an <strong id="success-email"></strong> gesendet.</p>
+                                <p class="mt-2">Bestellnummer: <strong id="success-order-number"></strong></p>
+
+                                <div class="box mt-4" id="ticket-codes-box">
+                                    <h4 class="title is-5">Ihre Ticket-Codes</h4>
+                                    <div id="ticket-codes-list">
+                                        <!-- Ticket codes will be shown here -->
+                                    </div>
+                                </div>
+
+                                <button class="button is-primary mt-4" onclick="window.print()">
+                                    <span class="icon">
+                                        <i class="fas fa-print"></i>
+                                    </span>
+                                    <span>Tickets drucken</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="has-text-centered mt-4 no-print">
+                    <p class="has-text-white-ter">
+                        Powered by <strong>BANKpay+</strong> | Sichere SEPA-Sofortueberweisungen
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Application State
+        const state = {
+            organization: null,
+            event: null,
+            tickets: [],
+            cart: {},
+            order: null,
+            paymentCheckInterval: null
+        };
+
+        // API Configuration
+        const API_BASE = '/v1';
+
+        // Get organization and event from URL
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                org: params.get('org') || 'bmf-demo',
+                event: params.get('event') || 'bmf-2026-hauptfest'
+            };
+        }
+
+        // Initialize application
+        async function init() {
+            const { org, event } = getUrlParams();
+
+            try {
+                // Load event data
+                const response = await fetch(`${API_BASE}/organizations/${org}/events/${event}`);
+                if (!response.ok) {
+                    throw new Error('Event nicht gefunden');
+                }
+
+                const data = await response.json();
+                state.event = data.event;
+                state.tickets = data.tickets;
+                state.organization = data.organization;
+
+                // Also get payment config
+                const configResponse = await fetch(`${API_BASE}/organizations/${org}/payment-config`);
+                if (configResponse.ok) {
+                    state.paymentConfig = await configResponse.json();
+                }
+
+                // Render UI
+                renderEventHeader();
+                renderTickets();
+                showStep(1);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+
+        // Show specific step
+        function showStep(stepNumber) {
+            document.getElementById('loading').style.display = 'none';
+
+            // Update step indicators
+            for (let i = 1; i <= 3; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                stepEl.classList.remove('active', 'completed');
+                if (i < stepNumber) {
+                    stepEl.classList.add('completed');
+                } else if (i === stepNumber) {
+                    stepEl.classList.add('active');
+                }
+            }
+
+            // Show/hide step content
+            document.getElementById('step-tickets').style.display = stepNumber === 1 ? 'block' : 'none';
+            document.getElementById('step-details').style.display = stepNumber === 2 ? 'block' : 'none';
+            document.getElementById('step-payment').style.display = stepNumber === 3 ? 'block' : 'none';
+        }
+
+        // Render event header
+        function renderEventHeader() {
+            document.getElementById('event-name').textContent = state.event.name;
+
+            const startDate = new Date(state.event.start_date);
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('event-date').textContent = startDate.toLocaleDateString('de-AT', options);
+
+            if (state.event.venue_name) {
+                document.getElementById('event-venue').textContent =
+                    `${state.event.venue_name}${state.event.venue_address ? ' - ' + state.event.venue_address : ''}`;
+            }
+        }
+
+        // Render ticket list
+        function renderTickets() {
+            const container = document.getElementById('ticket-list');
+            container.innerHTML = '';
+
+            state.tickets.forEach(ticket => {
+                const available = ticket.available;
+                const isAvailable = available > 0;
+
+                const ticketCard = document.createElement('div');
+                ticketCard.className = 'box ticket-card mb-4';
+                ticketCard.innerHTML = `
+                    <div class="columns is-vcentered">
+                        <div class="column">
+                            <h4 class="title is-5 mb-1">${ticket.name}</h4>
+                            ${ticket.description ? `<p class="has-text-grey">${ticket.description}</p>` : ''}
+                            <p class="mt-2">
+                                <strong class="is-size-4">EUR ${ticket.price.toFixed(2).replace('.', ',')}</strong>
+                            </p>
+                            <p class="is-size-7 has-text-grey">
+                                ${isAvailable ? `${available} verfuegbar` : 'Ausverkauft'}
+                            </p>
+                        </div>
+                        <div class="column is-narrow">
+                            ${isAvailable ? `
+                                <div class="quantity-control">
+                                    <button class="button is-small" onclick="updateQuantity(${ticket.id}, -1)" ${!state.cart[ticket.id] ? 'disabled' : ''}>
+                                        <span class="icon"><i class="fas fa-minus"></i></span>
+                                    </button>
+                                    <input type="number" class="input is-small" value="${state.cart[ticket.id] || 0}"
+                                           min="0" max="${Math.min(available, ticket.max_per_order)}"
+                                           onchange="setQuantity(${ticket.id}, this.value)">
+                                    <button class="button is-small" onclick="updateQuantity(${ticket.id}, 1)"
+                                            ${(state.cart[ticket.id] || 0) >= Math.min(available, ticket.max_per_order) ? 'disabled' : ''}>
+                                        <span class="icon"><i class="fas fa-plus"></i></span>
+                                    </button>
+                                </div>
+                            ` : `
+                                <span class="tag is-danger">Ausverkauft</span>
+                            `}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(ticketCard);
+            });
+        }
+
+        // Update ticket quantity
+        function updateQuantity(ticketId, delta) {
+            const ticket = state.tickets.find(t => t.id === ticketId);
+            const current = state.cart[ticketId] || 0;
+            const newValue = current + delta;
+            const max = Math.min(ticket.available, ticket.max_per_order);
+
+            if (newValue >= 0 && newValue <= max) {
+                if (newValue === 0) {
+                    delete state.cart[ticketId];
+                } else {
+                    state.cart[ticketId] = newValue;
+                }
+                renderTickets();
+                renderCart();
+            }
+        }
+
+        // Set ticket quantity directly
+        function setQuantity(ticketId, value) {
+            const ticket = state.tickets.find(t => t.id === ticketId);
+            const newValue = parseInt(value) || 0;
+            const max = Math.min(ticket.available, ticket.max_per_order);
+
+            if (newValue >= 0 && newValue <= max) {
+                if (newValue === 0) {
+                    delete state.cart[ticketId];
+                } else {
+                    state.cart[ticketId] = newValue;
+                }
+                renderTickets();
+                renderCart();
+            }
+        }
+
+        // Render cart
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            const ticketIds = Object.keys(state.cart);
+
+            if (ticketIds.length === 0) {
+                container.innerHTML = '<p class="has-text-grey">Keine Tickets ausgewaehlt</p>';
+                document.getElementById('cart-total').textContent = 'EUR 0,00';
+                document.getElementById('btn-to-details').disabled = true;
+                return;
+            }
+
+            let total = 0;
+            let html = '<div class="content">';
+
+            ticketIds.forEach(ticketId => {
+                const ticket = state.tickets.find(t => t.id === parseInt(ticketId));
+                const quantity = state.cart[ticketId];
+                const subtotal = ticket.price * quantity;
+                total += subtotal;
+
+                html += `
+                    <div class="level is-mobile mb-2">
+                        <div class="level-left">
+                            <div>
+                                <strong>${quantity}x</strong> ${ticket.name}
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            EUR ${subtotal.toFixed(2).replace('.', ',')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+            document.getElementById('cart-total').textContent = `EUR ${total.toFixed(2).replace('.', ',')}`;
+            document.getElementById('btn-to-details').disabled = false;
+        }
+
+        // Render order summary
+        function renderOrderSummary() {
+            const container = document.getElementById('order-summary');
+            const ticketIds = Object.keys(state.cart);
+
+            let total = 0;
+            let html = '<table class="table is-fullwidth"><tbody>';
+
+            ticketIds.forEach(ticketId => {
+                const ticket = state.tickets.find(t => t.id === parseInt(ticketId));
+                const quantity = state.cart[ticketId];
+                const subtotal = ticket.price * quantity;
+                total += subtotal;
+
+                html += `
+                    <tr>
+                        <td>${quantity}x ${ticket.name}</td>
+                        <td class="has-text-right">EUR ${subtotal.toFixed(2).replace('.', ',')}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Gesamt</th>
+                        <th class="has-text-right">EUR ${total.toFixed(2).replace('.', ',')}</th>
+                    </tr>
+                </tfoot>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // Create order
+        async function createOrder() {
+            const { org } = getUrlParams();
+
+            const items = Object.keys(state.cart).map(ticketId => ({
+                ticket_id: parseInt(ticketId),
+                quantity: state.cart[ticketId]
+            }));
+
+            const orderData = {
+                customer_name: document.getElementById('customer-name').value,
+                customer_email: document.getElementById('customer-email').value,
+                customer_phone: document.getElementById('customer-phone').value || null,
+                items: items
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/organizations/${org}/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Bestellung fehlgeschlagen');
+                }
+
+                const data = await response.json();
+                state.order = data;
+
+                // Show payment step
+                showPaymentStep(data);
+
+            } catch (error) {
+                alert('Fehler: ' + error.message);
+            }
+        }
+
+        // Show payment step
+        function showPaymentStep(orderData) {
+            showStep(3);
+
+            // Set payment details
+            if (orderData.payment.qrcode_url) {
+                document.getElementById('payment-qr-code').src = orderData.payment.qrcode_url;
+            }
+
+            document.getElementById('payment-recipient').textContent = orderData.payment.recipient;
+            document.getElementById('payment-iban').textContent = orderData.payment.iban;
+            document.getElementById('payment-bic').textContent = orderData.payment.bic || '-';
+            document.getElementById('payment-amount').textContent = `EUR ${orderData.payment.amount.toFixed(2).replace('.', ',')}`;
+            document.getElementById('payment-reference').textContent = orderData.payment.reference;
+
+            // Start polling for payment
+            startPaymentCheck(orderData.order.order_number);
+        }
+
+        // Start checking for payment
+        function startPaymentCheck(orderNumber) {
+            let checkCount = 0;
+            const maxChecks = 300; // 5 minutes at 1 check per second
+
+            state.paymentCheckInterval = setInterval(async () => {
+                checkCount++;
+
+                if (checkCount > maxChecks) {
+                    clearInterval(state.paymentCheckInterval);
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/orders/${orderNumber}/status`);
+                    const data = await response.json();
+
+                    if (data.paid) {
+                        clearInterval(state.paymentCheckInterval);
+                        showPaymentSuccess();
+                    }
+                } catch (error) {
+                    console.error('Payment check error:', error);
+                }
+            }, 1500);
+        }
+
+        // Show payment success
+        function showPaymentSuccess() {
+            document.getElementById('payment-pending').style.display = 'none';
+            document.getElementById('payment-success').style.display = 'block';
+
+            document.getElementById('success-email').textContent = document.getElementById('customer-email').value;
+            document.getElementById('success-order-number').textContent = state.order.order.order_number;
+
+            // Show ticket codes
+            const codesContainer = document.getElementById('ticket-codes-list');
+            let codesHtml = '';
+
+            state.order.order.items.forEach(item => {
+                codesHtml += `<div class="mb-3">
+                    <strong>${item.ticket_name}</strong><br>
+                    ${item.ticket_codes.map(code => `<span class="tag is-info is-medium mr-1 mb-1">${code}</span>`).join('')}
+                </div>`;
+            });
+
+            codesContainer.innerHTML = codesHtml;
+        }
+
+        // Event listeners
+        document.getElementById('btn-to-details').addEventListener('click', () => {
+            renderOrderSummary();
+            showStep(2);
+        });
+
+        document.getElementById('btn-back-tickets').addEventListener('click', () => {
+            showStep(1);
+        });
+
+        document.getElementById('customer-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            createOrder();
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

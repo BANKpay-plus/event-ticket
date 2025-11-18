@@ -1,0 +1,182 @@
+{
+  "organizations": [
+    {
+      "slug": "mv-st-poelten",
+      "name": "Musikverein St. Poelten",
+      "description": "Traditionsreicher Musikverein seit 1850, Organisator des BMF 2026 St. Poelten",
+      "email": "info@mv-stpoelten.at",
+      "phone": "+43 2742 12345",
+      "website": "https://mv-stpoelten.at",
+      "street_address": "Rathausplatz 1",
+      "postal_code": "3100",
+      "city": "St. Poelten",
+      "country": "AT",
+      "iban": "AT611904300234573201",
+      "bic": "BKAUATWW",
+      "recipient_name": "Musikverein St. Poelten",
+      "payment_reference_prefix": "BMF2026-STP",
+      "primary_color": "#1976D2",
+      "secondary_color": "#FFC107"
+    },
+    {
+      "slug": "tk-krems",
+      "name": "Trachtenkapelle Krems",
+      "description": "Trachtenkapelle Krems an der Donau - BMF 2026",
+      "email": "office@tk-krems.at",
+      "phone": "+43 2732 98765",
+      "website": "https://tk-krems.at",
+      "street_address": "Musikplatz 5",
+      "postal_code": "3500",
+      "city": "Krems an der Donau",
+      "country": "AT",
+      "iban": "AT483200000012345678",
+      "bic": "RLNWATWW",
+      "recipient_name": "Trachtenkapelle Krems",
+      "payment_reference_prefix": "BMF2026-KR",
+      "primary_color": "#2E7D32",
+      "secondary_color": "#FFEB3B"
+    },
+    {
+      "slug": "bmk-tulln",
+      "name": "Blasmusikkapelle Tulln",
+      "description": "Blasmusikkapelle der Stadt Tulln - Bezirksmusikfest 2026",
+      "email": "kontakt@bmk-tulln.at",
+      "phone": "+43 2272 54321",
+      "website": "https://bmk-tulln.at",
+      "street_address": "Hauptplatz 10",
+      "postal_code": "3430",
+      "city": "Tulln an der Donau",
+      "country": "AT",
+      "iban": "AT891200000098765432",
+      "bic": "BKAUATWW",
+      "recipient_name": "Blasmusikkapelle Tulln",
+      "payment_reference_prefix": "BMF2026-TU",
+      "primary_color": "#C62828",
+      "secondary_color": "#FFFFFF"
+    },
+    {
+      "slug": "mk-melk",
+      "name": "Musikkapelle Melk",
+      "description": "Musikkapelle Melk - Im Schatten des Stifts seit 1876",
+      "email": "info@mk-melk.at",
+      "phone": "+43 2752 11223",
+      "website": "https://mk-melk.at",
+      "street_address": "Stiftsweg 3",
+      "postal_code": "3390",
+      "city": "Melk",
+      "country": "AT",
+      "iban": "AT243400000011223344",
+      "bic": "RZOOAT2L",
+      "recipient_name": "Musikkapelle Melk",
+      "payment_reference_prefix": "BMF2026-ME",
+      "primary_color": "#6A1B9A",
+      "secondary_color": "#FFD54F"
+    },
+    {
+      "slug": "smk-amstetten",
+      "name": "Stadtmusikkapelle Amstetten",
+      "description": "Stadtmusikkapelle Amstetten - Musik im Herzen des Mostviertels",
+      "email": "office@smk-amstetten.at",
+      "phone": "+43 7472 66778",
+      "website": "https://smk-amstetten.at",
+      "street_address": "Rathausstrasse 1",
+      "postal_code": "3300",
+      "city": "Amstetten",
+      "country": "AT",
+      "iban": "AT565600000055667788",
+      "bic": "OPSKATWW",
+      "recipient_name": "Stadtmusikkapelle Amstetten",
+      "payment_reference_prefix": "BMF2026-AM",
+      "primary_color": "#00695C",
+      "secondary_color": "#FF8A65"
+    }
+  ],
+  "events": [
+    {
+      "organization_slug": "mv-st-poelten",
+      "slug": "bmf-2026-stpoelten",
+      "name": "Bezirksmusikfest 2026 St. Poelten",
+      "description": "Das grosse Bezirksmusikfest mit Festzelt, Konzerten und Festumzug durch die Innenstadt. Ein musikalisches Highlight fuer die ganze Familie!",
+      "event_type": "festival",
+      "venue_name": "VAZ St. Poelten",
+      "venue_address": "Kelsengasse 9, 3100 St. Poelten",
+      "start_date": "2026-06-13T14:00:00",
+      "end_date": "2026-06-14T02:00:00",
+      "max_capacity": 8000,
+      "sales_start": "2025-12-01T00:00:00",
+      "sales_end": "2026-06-12T23:59:59"
+    },
+    {
+      "organization_slug": "tk-krems",
+      "slug": "bmf-2026-krems",
+      "name": "Bezirksmusikfest Krems 2026",
+      "description": "Traditionelles Musikfest in der Wachau mit Blasmusik, Volkstanz und regionalen Spezialitaeten.",
+      "event_type": "festival",
+      "venue_name": "Kremser Sandgrube",
+      "venue_address": "Dr.-Karl-Dorrek-Strasse, 3500 Krems",
+      "start_date": "2026-07-04T15:00:00",
+      "end_date": "2026-07-05T01:00:00",
+      "max_capacity": 5000,
+      "sales_start": "2026-01-01T00:00:00",
+      "sales_end": "2026-07-03T23:59:59"
+    },
+    {
+      "organization_slug": "bmk-tulln",
+      "slug": "bmf-2026-tulln",
+      "name": "BMF Tulln 2026 - Musik am Fluss",
+      "description": "Bezirksmusikfest direkt an der Donau mit Buehnenprogramm, Festzelt und Feuerwerk.",
+      "event_type": "festival",
+      "venue_name": "Donaubuehne Tulln",
+      "venue_address": "Donaulaende, 3430 Tulln",
+      "start_date": "2026-08-15T16:00:00",
+      "end_date": "2026-08-16T00:00:00",
+      "max_capacity": 6000,
+      "sales_start": "2026-02-01T00:00:00",
+      "sales_end": "2026-08-14T23:59:59"
+    }
+  ],
+  "ticket_templates": [
+    {
+      "name": "Tageskarte Erwachsene",
+      "description": "Tageseintritt zum Festgelaende fuer Erwachsene",
+      "price": 18.00,
+      "max_per_order": 10,
+      "sort_order": 1
+    },
+    {
+      "name": "Tageskarte Jugend (14-18)",
+      "description": "Ermaessigter Eintritt fuer Jugendliche von 14-18 Jahren",
+      "price": 10.00,
+      "max_per_order": 10,
+      "sort_order": 2
+    },
+    {
+      "name": "Kinder bis 14 Jahre",
+      "description": "Freier Eintritt fuer Kinder bis 14 Jahre in Begleitung",
+      "price": 0.00,
+      "max_per_order": 10,
+      "sort_order": 3
+    },
+    {
+      "name": "Familienkarte",
+      "description": "Eintritt fuer 2 Erwachsene und bis zu 3 Kinder",
+      "price": 35.00,
+      "max_per_order": 2,
+      "sort_order": 4
+    },
+    {
+      "name": "VIP-Ticket",
+      "description": "Zugang zum VIP-Bereich inkl. Getraenke und Sitzplatzreservierung",
+      "price": 65.00,
+      "max_per_order": 4,
+      "sort_order": 5
+    },
+    {
+      "name": "Festabzeichen",
+      "description": "Erinnerungsabzeichen zum BMF 2026",
+      "price": 5.00,
+      "max_per_order": 20,
+      "sort_order": 6
+    }
+  ]
+}

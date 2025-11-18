@@ -1,11 +1,68 @@
-version: '2'
+version: '3.8'
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: event-ticket-db
+    environment:
+      POSTGRES_DB: event_ticket
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-event_ticket_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./app/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./app/sample-data:/docker-entrypoint-initdb.d/sample-data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_ticket"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-  website:
-    image: rg.fr-par.scw.cloud/sofort/a-bu.ch:latest
-    restart: always
+  # API Server (Sanic)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: event-ticket-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: event_ticket
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-event_ticket_secret}
+      PORT: 8010
+      DEBUG: ${DEBUG:-false}
+      WORKERS: ${WORKERS:-2}
+      SEPA_API_URL: https://api.sepa.digital
+    ports:
+      - "8010:8010"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Web Frontend (Nginx)
+  web:
+    image: nginx:alpine
+    container_name: event-ticket-web
+    volumes:
+      - ./dist:/usr/share/nginx/html:ro
+      - ./nginx-docker.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
       - "443:443"
+    depends_on:
+      - api
+    restart: unless-stopped
 
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: event-ticket-network
